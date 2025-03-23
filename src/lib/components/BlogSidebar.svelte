@@ -12,12 +12,12 @@
 	<BlogCategories />
 
 	<!-- Popular posts section -->
-	{#if popularPosts.length > 0}
-		<div class="card bg-base-100 shadow-lg">
-			<div class="card-body">
-				<h3 class="card-title text-lg">Popular Posts</h3>
-				<div class="divider mt-0"></div>
+	<div class="card bg-base-100 shadow-lg">
+		<div class="card-body">
+			<h3 class="card-title text-lg">Popular Posts</h3>
+			<div class="divider mt-0"></div>
 
+			{#if popularPosts.length > 0}
 				<ul class="space-y-4">
 					{#each popularPosts as post}
 						<li
@@ -41,9 +41,13 @@
 						</li>
 					{/each}
 				</ul>
-			</div>
+			{:else}
+				<div class="text-base-content/70 py-4 text-center">
+					<p>No popular posts to display</p>
+				</div>
+			{/if}
 		</div>
-	{/if}
+	</div>
 
 	<!-- Tags cloud -->
 	<div class="card bg-base-100 shadow-lg">

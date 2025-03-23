@@ -9,6 +9,27 @@
 		isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
 	}
 
+	// Error messages based on status code
+	const errorMessages = {
+		404: "We couldn't find the page you're looking for.",
+		500: 'Something went wrong on our server.',
+		503: 'The service is currently unavailable.',
+		504: 'The server took too long to respond.'
+		// Add more status codes as needed
+	};
+
+	// Get appropriate error message
+	function getErrorMessage(status: number, message?: string): string {
+		if (isOffline) return 'You appear to be offline. Please check your connection.';
+
+		// Use the provided message if available, otherwise use status-based message
+		return (
+			message ||
+			errorMessages[status as keyof typeof errorMessages] ||
+			'An unexpected error occurred.'
+		);
+	}
+
 	// Run once when the component is mounted
 	import { onMount } from 'svelte';
 
@@ -26,51 +47,35 @@
 	});
 </script>
 
-<div class="hero bg-base-200 min-h-[60vh]">
+<div class="hero bg-base-200 min-h-[70vh]">
 	<div class="hero-content text-center">
 		<div class="max-w-md">
-			<h1 class="mb-4 text-4xl font-bold">
+			<h1 class="text-5xl font-bold">
 				{#if isOffline}
 					You're Offline
 				{:else if page.status === 404}
-					Blog Post Not Found
+					Page Not Found
 				{:else}
-					Blog Error
+					Error {page.status}
 				{/if}
 			</h1>
 
-			<div class="divider"></div>
-
-			<p class="py-6">
+			<div class="my-8 text-6xl">
 				{#if isOffline}
-					Please check your internet connection and try again.
+					📡
 				{:else if page.status === 404}
-					Sorry, we couldn't find the blog post you're looking for.
+					🔍
+				{:else if page.status >= 500}
+					🛠️
 				{:else}
-					{page.error?.message || 'An error occurred while loading blog content.'}
+					⚠️
 				{/if}
-			</p>
+			</div>
+
+			<p class="py-6">{getErrorMessage(page.status, page.error?.message)}</p>
 
 			<div class="flex flex-wrap justify-center gap-4">
-				<a href="/blog" class="btn btn-primary">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-						stroke="currentColor"
-						class="mr-1 h-5 w-5"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-						/>
-					</svg>
-					Back to Blog
-				</a>
-
-				<a href="/" class="btn btn-outline">
+				<a href="/" class="btn btn-primary">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
@@ -88,7 +93,7 @@
 					Go Home
 				</a>
 
-				{#if !isOffline && page.status !== 404}
+				{#if page.status !== 404}
 					<button class="btn btn-outline" onclick={() => window.location.reload()}>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"

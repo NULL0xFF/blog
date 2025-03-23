@@ -28,3 +28,21 @@ export interface BlogPageData {
 export interface PostPageData {
   post: Post;
 }
+
+export interface Reply {
+  id: number;
+  name: string;
+  date: string;
+  content: string;
+  avatar: string;
+  isAuthor?: boolean;
+}
+
+export interface Comment {
+  id: number;
+  name: string;
+  date: string;
+  content: string;
+  avatar: string;
+  replies: Reply[];
+}

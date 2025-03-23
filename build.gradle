@@ -1,0 +1,25 @@
+import com.github.gradle.node.npm.task.NpmTask
+
+plugins {
+    id "com.github.node-gradle.node" version "7.1.0"
+}
+
+node {
+    // Automatically download and use a local Node.js installation
+    download = true
+    // Optionally specify the Node.js version (adjust as needed)
+    version = "18.19.1"
+    // Optionally specify the npm version (adjust as needed)
+    npmVersion = "9.2.0"
+}
+
+//// Task to install npm dependencies
+//task npmInstall(type: com.github.gradle.node.npm.task.NpmTask) {
+//    args = ['install']
+//}
+
+// Task to build the Svelte web application
+tasks.register('build', NpmTask) {
+    dependsOn npmInstall
+    args = ['run', 'build']
+}

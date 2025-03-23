@@ -8,24 +8,19 @@ export const load: PageLoad<PostPageData> = async ({ params, parent }) => {
     // Get featured posts from parent layout data
     const { featuredPosts } = await parent();
 
-    // Get the specific post
+    // Get the specific post - this will throw an error if the API fails
     const post = await getPostBySlug(params.slug);
-
-    if (!post) {
-      throw error(404, `Post with slug "${params.slug}" not found`);
-    }
 
     return {
       post,
       featuredPosts
     };
-  } catch (e) {
-    // If error is already a SvelteKit error with status, rethrow it
-    if (e && typeof e === 'object' && 'status' in e) {
-      throw e;
+  } catch (err) {
+    // If it's already a SvelteKit error, rethrow it
+    if (err && typeof err === 'object' && 'status' in err) {
+      throw err;
     }
 
-    // Otherwise throw a 404
-    throw error(404, `Post with slug "${params.slug}" not found`);
+    throw error(500, `Failed to load post "${params.slug}"`);
   }
 };

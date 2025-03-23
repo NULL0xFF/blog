@@ -1,5 +1,6 @@
 import { browser } from '$app/environment';
 import type { Post, PaginatedResponse } from '$lib/types/blog';
+import { error } from '@sveltejs/kit';
 
 const API_URL = 'http://localhost/api';
 
@@ -28,14 +29,14 @@ export async function getAllPosts(): Promise<Post[]> {
     const response = await fetch(`${API_URL}/`);
 
     if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
+      throw error(response.status, `API request failed with status ${response.status}`);
     }
 
     const posts = await response.json();
     return posts.map(normalizePost);
-  } catch (error) {
-    console.error('Error fetching blog posts:', error);
-    return generateMockPosts(30);
+  } catch (err) {
+    console.error('Error fetching blog posts:', err);
+    throw error(500, 'Failed to fetch blog posts');
   }
 }
 
@@ -45,37 +46,24 @@ export async function getAllPosts(): Promise<Post[]> {
 export async function getPaginatedPosts(page: number, limit: number): Promise<PaginatedResponse<Post>> {
   try {
     // In a real API, you would call an endpoint with pagination parameters
-    // const response = await fetch(`${API_URL}/?page=${page}&limit=${limit}`);
+    const response = await fetch(`${API_URL}/?page=${page}&limit=${limit}`);
 
-    // For this implementation, we'll fetch all posts and manually paginate
-    const allPosts = await getAllPosts();
+    if (!response.ok) {
+      throw error(response.status, `API request failed with status ${response.status}`);
+    }
 
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedPosts = allPosts.slice(startIndex, endIndex);
-
-    return {
-      items: paginatedPosts,
-      currentPage: page,
-      totalPages: Math.ceil(allPosts.length / limit),
-      totalItems: allPosts.length,
-      itemsPerPage: limit
-    };
-  } catch (error) {
-    console.error('Error fetching paginated posts:', error);
-
-    // Generate some mock data
-    const mockPosts = generateMockPosts(30);
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
+    const data = await response.json();
 
     return {
-      items: mockPosts.slice(startIndex, endIndex),
-      currentPage: page,
-      totalPages: Math.ceil(mockPosts.length / limit),
-      totalItems: mockPosts.length,
-      itemsPerPage: limit
+      items: data.items.map(normalizePost),
+      currentPage: data.currentPage || page,
+      totalPages: data.totalPages || 1,
+      totalItems: data.totalItems || data.items.length,
+      itemsPerPage: data.itemsPerPage || limit
     };
+  } catch (err) {
+    console.error('Error fetching paginated posts:', err);
+    throw error(500, 'Failed to load blog posts');
   }
 }
 
@@ -84,77 +72,25 @@ export async function getPaginatedPosts(page: number, limit: number): Promise<Pa
  */
 export async function getPostBySlug(slug: string): Promise<Post> {
   try {
-    // In a real API, you would have a dedicated endpoint for fetching a post by slug
-    // const response = await fetch(`${API_URL}/posts/${slug}`);
+    const response = await fetch(`${API_URL}/posts/${slug}`);
 
-    // For this implementation, we'll fetch all posts and find the one with the matching slug
-    const allPosts = await getAllPosts();
-    const post = allPosts.find(post => post.slug === slug);
-
-    if (!post) {
-      throw new Error(`Post with slug "${slug}" not found`);
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw error(404, `Post with slug "${slug}" not found`);
+      }
+      throw error(response.status, `API request failed with status ${response.status}`);
     }
 
-    return post;
-  } catch (error) {
-    console.error(`Error fetching post with slug "${slug}":`, error);
+    const post = await response.json();
+    return normalizePost(post);
+  } catch (err) {
+    console.error(`Error fetching post with slug "${slug}":`, err);
 
-    // Return a mock post
-    return generateMockPost(slug);
+    // If it's already a SvelteKit error, rethrow it
+    if (err && typeof err === 'object' && 'status' in err) {
+      throw err;
+    }
+
+    throw error(500, `Failed to load post "${slug}"`);
   }
-}
-
-/**
- * Generates mock posts for fallback content
- */
-export function generateMockPosts(count: number): Post[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: i + 1,
-    title: `Blog Post ${i + 1}`,
-    slug: `blog-post-${i + 1}`,
-    description: `This is a description for blog post ${i + 1}. This is mock data shown because the API request failed.`,
-    content: generateMockContent(i + 1),
-    imageUrl: `https://picsum.photos/seed/blog${i + 1}/800/600`,
-    date: new Date(Date.now() - i * 86400000).toISOString(),
-    author: 'Mock Author',
-    tags: ['mock', 'sample', i % 2 === 0 ? 'even' : 'odd']
-  }));
-}
-
-/**
- * Generates a single mock post by slug
- */
-export function generateMockPost(slug: string): Post {
-  return {
-    id: slug,
-    title: `Blog Post: ${slug}`,
-    slug: slug,
-    description: "This is a fallback description because the API request failed.",
-    content: generateMockContent(slug),
-    imageUrl: `https://picsum.photos/seed/${slug}/800/600`,
-    date: new Date().toISOString(),
-    author: 'Mock Author',
-    tags: ['mock', 'fallback']
-  };
-}
-
-/**
- * Generates mock content for a post
- */
-function generateMockContent(seed: string | number): string {
-  return `
-    <p>This is the full content of "Blog Post ${seed}". This is mock data shown because the API request failed.</p>
-    
-    <h2>Introduction</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget ultricies ultrices, 
-    nisl nisl aliquam nisl, eget ultricies nisl nisl eget nisl.</p>
-    
-    <h2>Main Section</h2>
-    <p>Praesent eget sem vel leo ultrices bibendum. Aenean faucibus. Morbi dolor nulla, malesuada eu, 
-    pulvinar at, mollis ac, nulla. Curabitur auctor semper nulla. Donec varius orci eget risus.</p>
-    
-    <h2>Conclusion</h2>
-    <p>Duis bibendum, felis sed interdum venenatis, turpis enim blandit mi, in porttitor pede justo eu massa. 
-    Donec dapibus. Duis at velit eu est congue elementum.</p>
-  `;
 }
