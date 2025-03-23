@@ -1,0 +1,158 @@
+#################################
+# Node – Logs, Runtime Data, & Caches
+#################################
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage & Testing
+coverage
+*.lcov
+.nyc_output
+
+# Instrumentation / Coverage Tools
+lib-cov
+
+# Build tools and task runners
+.grunt
+bower_components
+.lock-wscript
+build/Release
+
+# Dependency directories
+node_modules/
+jspm_packages/
+web_modules/
+
+# Caches and temporary files
+*.tsbuildinfo
+.npm
+.eslintcache
+.stylelintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# REPL history & npm pack output
+.node_repl_history
+*.tgz
+
+# Yarn – Integrity and v2 cache
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+#################################
+# Framework Build Outputs & Caches
+#################################
+# Parcel cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+out
+
+# Nuxt.js build/generate output
+.nuxt
+dist
+
+# Gatsby cache
+.cache/
+
+# Vuepress build output and temporary cache
+.vuepress/dist
+.temp
+
+# Docusaurus cache and generated files
+.docusaurus
+
+# Serverless directories & FuseBox cache
+.serverless
+.fusebox
+
+# Local development tools
+.dynamodb/
+.tern-port
+.vscode-test
+
+#################################
+# Node Patch & Svelte Specific
+#################################
+# Serverless Webpack directories
+.webpack/
+
+# SvelteKit – build output (use trailing slash for directories)
+.svelte-kit/
+
+# Svelte-specific (if applicable)
+package
+
+#################################
+# Gradle & Java Files
+#################################
+.gradle
+**/build/
+!src/**/build/
+
+# Gradle GUI config
+gradle-app.setting
+
+# Do not ignore Gradle wrapper files
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# Gradle caches and Eclipse files
+.gradletasknamecache
+.project
+.classpath
+
+# Gradle Patch: Java heap dumps
+*.hprof
+
+#################################
+# Output / Deployment Directories
+#################################
+.output
+.vercel
+.netlify
+.wrangler
+/build
+
+#################################
+# Operating System Files
+#################################
+.DS_Store
+Thumbs.db
+
+#################################
+# Environment Files
+#################################
+.env
+.env.*
+!.env.example
+!.env.test
+
+#################################
+# Vite
+#################################
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
