@@ -1,2 +1,2 @@
 rootProject.name = 'blog'
-include 'frontend'
+include 'frontend', 'backend'
