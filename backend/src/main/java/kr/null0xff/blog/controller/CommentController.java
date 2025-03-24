@@ -1,5 +1,12 @@
 package kr.null0xff.blog.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/comments")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Comment Management", description = "APIs for managing blog comments and moderation")
 public class CommentController {
 
   private final CommentService commentService;
@@ -42,12 +50,26 @@ public class CommentController {
    * @param size   Number of items per page
    * @return ResponseEntity with a page of comments
    */
+  @Operation(summary = "Get approved comments for a post",
+      description = "Retrieves approved comments for a specific post with pagination")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved comments",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CommentResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Post not found",
+          content = @Content)
+  })
   @GetMapping("/post/{postId}")
   public ResponseEntity<Page<CommentResponse>> getApprovedCommentsForPost(
+      @Parameter(description = "Post ID", required = true)
       @PathVariable Long postId,
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "20") int size,
+      @Parameter(description = "Sort field")
       @RequestParam(defaultValue = "createdAt") String sortBy,
+      @Parameter(description = "Sort direction (asc or desc)")
       @RequestParam(defaultValue = "desc") String direction) {
 
     log.info("Fetching comments for post ID: {} - page: {}, size: {}", postId, page, size);
@@ -73,10 +95,22 @@ public class CommentController {
    * @param size   Number of items per page
    * @return ResponseEntity with a page of top-level comments
    */
+  @Operation(summary = "Get top-level comments for a post",
+      description = "Retrieves only top-level comments (not replies) for a specific post with pagination")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved top-level comments",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CommentResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Post not found",
+          content = @Content)
+  })
   @GetMapping("/post/{postId}/top-level")
   public ResponseEntity<Page<CommentResponse>> getTopLevelCommentsForPost(
+      @Parameter(description = "Post ID", required = true)
       @PathVariable Long postId,
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "20") int size) {
 
     log.info("Fetching top-level comments for post ID: {} - page: {}, size: {}", postId, page,
@@ -99,10 +133,22 @@ public class CommentController {
    * @param size      Number of items per page
    * @return ResponseEntity with a page of replies
    */
+  @Operation(summary = "Get replies to a comment",
+      description = "Retrieves replies to a specific comment with pagination")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved replies",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CommentResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Comment not found",
+          content = @Content)
+  })
   @GetMapping("/{commentId}/replies")
   public ResponseEntity<Page<CommentResponse>> getRepliesForComment(
+      @Parameter(description = "Comment ID", required = true)
       @PathVariable Long commentId,
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "20") int size) {
 
     log.info("Fetching replies for comment ID: {} - page: {}, size: {}", commentId, page, size);
@@ -122,8 +168,19 @@ public class CommentController {
    * @param id Comment ID
    * @return ResponseEntity with the comment
    */
+  @Operation(summary = "Get comment by ID",
+      description = "Retrieves a specific comment by its ID")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the comment",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CommentResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Comment not found",
+          content = @Content)
+  })
   @GetMapping("/{id}")
-  public ResponseEntity<CommentResponse> getCommentById(@PathVariable Long id) {
+  public ResponseEntity<CommentResponse> getCommentById(
+      @Parameter(description = "Comment ID", required = true)
+      @PathVariable Long id) {
     log.info("Fetching comment with ID: {}", id);
 
     Comment comment = commentService.getCommentById(id);
@@ -139,9 +196,18 @@ public class CommentController {
    * @param size Number of items per page
    * @return ResponseEntity with a page of unapproved comments
    */
+  @Operation(summary = "Get comments for moderation",
+      description = "Retrieves all comments pending approval for moderation with pagination")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved comments for moderation",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CommentResponse.class)))
+  })
   @GetMapping("/moderation")
   public ResponseEntity<Page<CommentResponse>> getCommentsForModeration(
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "20") int size) {
 
     log.info("Fetching comments for moderation - page: {}, size: {}", page, size);
@@ -160,6 +226,13 @@ public class CommentController {
    *
    * @return ResponseEntity with the count
    */
+  @Operation(summary = "Count comments for moderation",
+      description = "Returns the number of comments pending approval")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved count",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = Long.class)))
+  })
   @GetMapping("/moderation/count")
   public ResponseEntity<Long> countCommentsForModeration() {
     log.info("Counting comments for moderation");
@@ -177,10 +250,22 @@ public class CommentController {
    * @param size   Number of items per page
    * @return ResponseEntity with a list of comments with their replies
    */
+  @Operation(summary = "Get comments with replies",
+      description = "Retrieves comments with their replies for a post in an efficient manner")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved comments with replies",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CommentResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Post not found",
+          content = @Content)
+  })
   @GetMapping("/post/{postId}/with-replies")
   public ResponseEntity<List<CommentResponse>> getCommentsWithReplies(
+      @Parameter(description = "Post ID", required = true)
       @PathVariable Long postId,
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "20") int size) {
 
     log.info("Fetching comments with replies for post ID: {} - page: {}, size: {}", postId, page,
@@ -203,8 +288,20 @@ public class CommentController {
    * @param request Comment creation request
    * @return ResponseEntity with the created comment
    */
+  @Operation(summary = "Create a new comment",
+      description = "Creates a new comment or reply on a post")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "201", description = "Comment successfully created",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CommentResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid input",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "Post, author, or parent comment not found",
+          content = @Content)
+  })
   @PostMapping
   public ResponseEntity<CommentResponse> createComment(
+      @Parameter(description = "Comment details", required = true)
       @Valid @RequestBody CommentCreateRequest request) {
     log.info("Creating new comment for post ID: {}", request.getPostId());
 
@@ -235,9 +332,22 @@ public class CommentController {
    * @param request Comment update request
    * @return ResponseEntity with the updated comment
    */
+  @Operation(summary = "Update a comment",
+      description = "Updates the content of an existing comment")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Comment successfully updated",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CommentResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid input",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "Comment not found",
+          content = @Content)
+  })
   @PutMapping("/{id}")
   public ResponseEntity<CommentResponse> updateComment(
+      @Parameter(description = "Comment ID", required = true)
       @PathVariable Long id,
+      @Parameter(description = "Updated comment details", required = true)
       @Valid @RequestBody CommentUpdateRequest request) {
 
     log.info("Updating comment with ID: {}", id);
@@ -256,8 +366,19 @@ public class CommentController {
    * @param id Comment ID
    * @return ResponseEntity with the approved comment
    */
+  @Operation(summary = "Approve a comment",
+      description = "Approves a comment for public display")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Comment successfully approved",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CommentResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Comment not found",
+          content = @Content)
+  })
   @PutMapping("/{id}/approve")
-  public ResponseEntity<CommentResponse> approveComment(@PathVariable Long id) {
+  public ResponseEntity<CommentResponse> approveComment(
+      @Parameter(description = "Comment ID", required = true)
+      @PathVariable Long id) {
     log.info("Approving comment with ID: {}", id);
 
     Comment approvedComment = commentService.approveComment(id);
@@ -274,8 +395,18 @@ public class CommentController {
    * @param id Comment ID
    * @return ResponseEntity with no content
    */
+  @Operation(summary = "Reject a comment",
+      description = "Rejects and deletes a comment during moderation")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "204", description = "Comment successfully rejected",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "Comment not found",
+          content = @Content)
+  })
   @DeleteMapping("/{id}/reject")
-  public ResponseEntity<Void> rejectComment(@PathVariable Long id) {
+  public ResponseEntity<Void> rejectComment(
+      @Parameter(description = "Comment ID", required = true)
+      @PathVariable Long id) {
     log.info("Rejecting comment with ID: {}", id);
 
     commentService.rejectComment(id);
@@ -289,8 +420,18 @@ public class CommentController {
    * @param id Comment ID
    * @return ResponseEntity with no content
    */
+  @Operation(summary = "Delete a comment",
+      description = "Deletes a comment and all its replies")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "204", description = "Comment successfully deleted",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "Comment not found",
+          content = @Content)
+  })
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
+  public ResponseEntity<Void> deleteComment(
+      @Parameter(description = "Comment ID", required = true)
+      @PathVariable Long id) {
     log.info("Deleting comment with ID: {}", id);
 
     commentService.deleteComment(id);
@@ -305,9 +446,18 @@ public class CommentController {
    * @param size Number of items per page
    * @return ResponseEntity with a page of recent comments
    */
+  @Operation(summary = "Get recent comments",
+      description = "Retrieves recent comments across all posts")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved recent comments",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CommentResponse.class)))
+  })
   @GetMapping("/recent")
   public ResponseEntity<Page<CommentResponse>> getRecentComments(
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "10") int size) {
 
     log.info("Fetching recent comments - page: {}, size: {}", page, size);
@@ -327,8 +477,19 @@ public class CommentController {
    * @param postId Post ID
    * @return ResponseEntity with the count
    */
+  @Operation(summary = "Count comments for a post",
+      description = "Counts the number of approved comments for a specific post")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Count retrieved successfully",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = Long.class))),
+      @ApiResponse(responseCode = "404", description = "Post not found",
+          content = @Content)
+  })
   @GetMapping("/post/{postId}/count")
-  public ResponseEntity<Long> countCommentsForPost(@PathVariable Long postId) {
+  public ResponseEntity<Long> countCommentsForPost(
+      @Parameter(description = "Post ID", required = true)
+      @PathVariable Long postId) {
     log.info("Counting comments for post ID: {}", postId);
 
     long count = commentService.countCommentsForPost(postId);

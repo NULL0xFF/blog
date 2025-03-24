@@ -1,5 +1,12 @@
 package kr.null0xff.blog.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Post Management", description = "APIs for managing blog posts and their content")
 public class PostController {
 
   private final PostService postService;
@@ -41,11 +49,22 @@ public class PostController {
    * @param size Number of items per page
    * @return ResponseEntity with a page of published posts
    */
+  @Operation(summary = "Get all published posts",
+      description = "Retrieves all published posts with pagination and sorting options")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved posts",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class)))
+  })
   @GetMapping
   public ResponseEntity<Page<PostResponse>> getAllPublishedPosts(
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "10") int size,
+      @Parameter(description = "Field to sort by")
       @RequestParam(defaultValue = "publishedAt") String sortBy,
+      @Parameter(description = "Sort direction (asc or desc)")
       @RequestParam(defaultValue = "desc") String direction) {
 
     log.info("Fetching published posts - page: {}, size: {}", page, size);
@@ -70,11 +89,22 @@ public class PostController {
    * @param size Number of items per page
    * @return ResponseEntity with a page of all posts
    */
+  @Operation(summary = "Get all posts (including drafts)",
+      description = "Retrieves all posts including drafts with pagination and sorting options")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved all posts",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class)))
+  })
   @GetMapping("/admin")
   public ResponseEntity<Page<PostResponse>> getAllPosts(
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "10") int size,
+      @Parameter(description = "Field to sort by")
       @RequestParam(defaultValue = "createdAt") String sortBy,
+      @Parameter(description = "Sort direction (asc or desc)")
       @RequestParam(defaultValue = "desc") String direction) {
 
     log.info("Fetching all posts - page: {}, size: {}", page, size);
@@ -98,8 +128,19 @@ public class PostController {
    * @param id Post ID
    * @return ResponseEntity with the post
    */
+  @Operation(summary = "Get post by ID",
+      description = "Retrieves a specific post by its ID")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the post",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Post not found",
+          content = @Content)
+  })
   @GetMapping("/{id}")
-  public ResponseEntity<PostResponse> getPostById(@PathVariable Long id) {
+  public ResponseEntity<PostResponse> getPostById(
+      @Parameter(description = "Post ID", required = true)
+      @PathVariable Long id) {
     log.info("Fetching post with ID: {}", id);
 
     Post post = postService.getPostById(id);
@@ -114,8 +155,19 @@ public class PostController {
    * @param slug Post slug
    * @return ResponseEntity with the post
    */
+  @Operation(summary = "Get published post by slug",
+      description = "Retrieves a specific published post by its slug")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the post",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Post not found or not published",
+          content = @Content)
+  })
   @GetMapping("/by-slug/{slug}")
-  public ResponseEntity<PostResponse> getPublishedPostBySlug(@PathVariable String slug) {
+  public ResponseEntity<PostResponse> getPublishedPostBySlug(
+      @Parameter(description = "Post slug", required = true)
+      @PathVariable String slug) {
     log.info("Fetching published post with slug: {}", slug);
 
     Post post = postService.getPublishedPostBySlug(slug);
@@ -132,10 +184,20 @@ public class PostController {
    * @param size  Number of items per page
    * @return ResponseEntity with a page of matching posts
    */
+  @Operation(summary = "Search published posts",
+      description = "Searches for published posts containing the query in title or content")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully performed search",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class)))
+  })
   @GetMapping("/search")
   public ResponseEntity<Page<PostResponse>> searchPublishedPosts(
+      @Parameter(description = "Search query", required = true)
       @RequestParam String query,
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "10") int size) {
 
     log.info("Searching for posts with query: {} - page: {}, size: {}", query, page, size);
@@ -157,10 +219,22 @@ public class PostController {
    * @param size         Number of items per page
    * @return ResponseEntity with a page of posts in the category
    */
+  @Operation(summary = "Get posts by category",
+      description = "Retrieves published posts belonging to a specific category")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved posts",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Category not found",
+          content = @Content)
+  })
   @GetMapping("/by-category/{categorySlug}")
   public ResponseEntity<Page<PostResponse>> getPostsByCategory(
+      @Parameter(description = "Category slug", required = true)
       @PathVariable String categorySlug,
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "10") int size) {
 
     log.info("Fetching posts for category: {} - page: {}, size: {}", categorySlug, page, size);
@@ -182,10 +256,22 @@ public class PostController {
    * @param size    Number of items per page
    * @return ResponseEntity with a page of posts with the tag
    */
+  @Operation(summary = "Get posts by tag",
+      description = "Retrieves published posts tagged with a specific tag")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved posts",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Tag not found",
+          content = @Content)
+  })
   @GetMapping("/by-tag/{tagSlug}")
   public ResponseEntity<Page<PostResponse>> getPostsByTag(
+      @Parameter(description = "Tag slug", required = true)
       @PathVariable String tagSlug,
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "10") int size) {
 
     log.info("Fetching posts for tag: {} - page: {}, size: {}", tagSlug, page, size);
@@ -207,10 +293,22 @@ public class PostController {
    * @param size     Number of items per page
    * @return ResponseEntity with a page of posts by the author
    */
+  @Operation(summary = "Get posts by author",
+      description = "Retrieves published posts written by a specific author")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved posts",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Author not found",
+          content = @Content)
+  })
   @GetMapping("/by-author/{username}")
   public ResponseEntity<Page<PostResponse>> getPostsByAuthor(
+      @Parameter(description = "Author's username", required = true)
       @PathVariable String username,
+      @Parameter(description = "Page number (0-based)")
       @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Number of items per page")
       @RequestParam(defaultValue = "10") int size) {
 
     log.info("Fetching posts by author: {} - page: {}, size: {}", username, page, size);
@@ -230,8 +328,16 @@ public class PostController {
    * @param limit Maximum number of posts to return
    * @return ResponseEntity with a list of recent posts
    */
+  @Operation(summary = "Get recent published posts",
+      description = "Retrieves the most recently published posts up to the specified limit")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved recent posts",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class)))
+  })
   @GetMapping("/recent")
   public ResponseEntity<List<PostResponse>> getRecentPublishedPosts(
+      @Parameter(description = "Maximum number of posts to return")
       @RequestParam(defaultValue = "5") int limit) {
 
     log.info("Fetching {} recent published posts", limit);
@@ -252,8 +358,21 @@ public class PostController {
    * @param request Post creation request
    * @return ResponseEntity with the created post
    */
+  @Operation(summary = "Create a new post",
+      description = "Creates a new blog post with the provided details")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "201", description = "Post successfully created",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid input",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "Author, category, or tag not found",
+          content = @Content)
+  })
   @PostMapping
-  public ResponseEntity<PostResponse> createPost(@Valid @RequestBody PostCreateRequest request) {
+  public ResponseEntity<PostResponse> createPost(
+      @Parameter(description = "Post details", required = true)
+      @Valid @RequestBody PostCreateRequest request) {
     log.info("Creating new post: {}", request.getTitle());
 
     // Create a Post entity from the request
@@ -287,9 +406,22 @@ public class PostController {
    * @param request Post update request
    * @return ResponseEntity with the updated post
    */
+  @Operation(summary = "Update an existing post",
+      description = "Updates a post with the specified ID")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Post successfully updated",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid input",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "Post, category, or tag not found",
+          content = @Content)
+  })
   @PutMapping("/{id}")
   public ResponseEntity<PostResponse> updatePost(
+      @Parameter(description = "Post ID", required = true)
       @PathVariable Long id,
+      @Parameter(description = "Updated post details", required = true)
       @Valid @RequestBody PostUpdateRequest request) {
 
     log.info("Updating post with ID: {}", id);
@@ -322,8 +454,19 @@ public class PostController {
    * @param id Post ID
    * @return ResponseEntity with the published post
    */
+  @Operation(summary = "Publish a post",
+      description = "Changes a post's status to published and sets the published date")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Post successfully published",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = PostResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Post not found",
+          content = @Content)
+  })
   @PutMapping("/{id}/publish")
-  public ResponseEntity<PostResponse> publishPost(@PathVariable Long id) {
+  public ResponseEntity<PostResponse> publishPost(
+      @Parameter(description = "Post ID", required = true)
+      @PathVariable Long id) {
     log.info("Publishing post with ID: {}", id);
 
     Post publishedPost = postService.publishPost(id);
@@ -340,8 +483,18 @@ public class PostController {
    * @param id Post ID
    * @return ResponseEntity with no content
    */
+  @Operation(summary = "Delete a post",
+      description = "Deletes the post with the specified ID")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "204", description = "Post successfully deleted",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "Post not found",
+          content = @Content)
+  })
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+  public ResponseEntity<Void> deletePost(
+      @Parameter(description = "Post ID", required = true)
+      @PathVariable Long id) {
     log.info("Deleting post with ID: {}", id);
 
     postService.deletePost(id);
@@ -355,8 +508,17 @@ public class PostController {
    * @param slug Slug to check
    * @return ResponseEntity with boolean result
    */
+  @Operation(summary = "Check if slug is in use",
+      description = "Checks if a post slug is already in use")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Check completed",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = Boolean.class)))
+  })
   @GetMapping("/check-slug")
-  public ResponseEntity<Boolean> isSlugInUse(@RequestParam String slug) {
+  public ResponseEntity<Boolean> isSlugInUse(
+      @Parameter(description = "Slug to check", required = true)
+      @RequestParam String slug) {
     log.info("Checking if slug is in use: {}", slug);
 
     boolean isInUse = postService.isSlugInUse(slug);
@@ -370,8 +532,17 @@ public class PostController {
    * @param title Title to generate slug from
    * @return ResponseEntity with the generated slug
    */
+  @Operation(summary = "Generate unique slug from title",
+      description = "Generates a unique URL-friendly slug from a post title")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Slug successfully generated",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = String.class)))
+  })
   @GetMapping("/generate-slug")
-  public ResponseEntity<String> generateUniqueSlug(@RequestParam String title) {
+  public ResponseEntity<String> generateUniqueSlug(
+      @Parameter(description = "Title to generate slug from", required = true)
+      @RequestParam String title) {
     log.info("Generating slug from title: {}", title);
 
     String slug = postService.generateUniqueSlug(title);

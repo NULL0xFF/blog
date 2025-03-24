@@ -1,5 +1,12 @@
 package kr.null0xff.blog.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "User Management", description = "APIs for managing blog users and authors")
 public class UserController {
 
   private final UserService userService;
@@ -36,6 +44,13 @@ public class UserController {
    *
    * @return ResponseEntity with a list of all users
    */
+  @Operation(summary = "Get all users",
+      description = "Retrieves a list of all registered users")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved users",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = UserResponse.class)))
+  })
   @GetMapping
   public ResponseEntity<List<UserResponse>> getAllUsers() {
     log.info("Fetching all users");
@@ -56,8 +71,19 @@ public class UserController {
    * @param id User ID
    * @return ResponseEntity with the user
    */
+  @Operation(summary = "Get user by ID",
+      description = "Retrieves a specific user by their ID")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the user",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = UserResponse.class))),
+      @ApiResponse(responseCode = "404", description = "User not found",
+          content = @Content)
+  })
   @GetMapping("/{id}")
-  public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+  public ResponseEntity<UserResponse> getUserById(
+      @Parameter(description = "User ID", required = true)
+      @PathVariable Long id) {
     log.info("Fetching user with ID: {}", id);
 
     User user = userService.getUserById(id);
@@ -72,8 +98,19 @@ public class UserController {
    * @param username Username
    * @return ResponseEntity with the user
    */
+  @Operation(summary = "Get user by username",
+      description = "Retrieves a specific user by their username")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the user",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = UserResponse.class))),
+      @ApiResponse(responseCode = "404", description = "User not found",
+          content = @Content)
+  })
   @GetMapping("/by-username/{username}")
-  public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
+  public ResponseEntity<UserResponse> getUserByUsername(
+      @Parameter(description = "Username", required = true)
+      @PathVariable String username) {
     log.info("Fetching user with username: {}", username);
 
     User user = userService.getUserByUsername(username);
@@ -88,8 +125,17 @@ public class UserController {
    * @param username Username to check
    * @return ResponseEntity with boolean result
    */
+  @Operation(summary = "Check if username is taken",
+      description = "Checks if a username is already registered")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Check completed",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = Boolean.class)))
+  })
   @GetMapping("/check-username")
-  public ResponseEntity<Boolean> isUsernameTaken(@RequestParam String username) {
+  public ResponseEntity<Boolean> isUsernameTaken(
+      @Parameter(description = "Username to check", required = true)
+      @RequestParam String username) {
     log.info("Checking if username is taken: {}", username);
 
     boolean isTaken = userService.isUsernameTaken(username);
@@ -103,8 +149,17 @@ public class UserController {
    * @param email Email to check
    * @return ResponseEntity with boolean result
    */
+  @Operation(summary = "Check if email is registered",
+      description = "Checks if an email address is already registered")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Check completed",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = Boolean.class)))
+  })
   @GetMapping("/check-email")
-  public ResponseEntity<Boolean> isEmailRegistered(@RequestParam String email) {
+  public ResponseEntity<Boolean> isEmailRegistered(
+      @Parameter(description = "Email to check", required = true)
+      @RequestParam String email) {
     log.info("Checking if email is registered: {}", email);
 
     boolean isRegistered = userService.isEmailRegistered(email);
@@ -118,8 +173,19 @@ public class UserController {
    * @param request User creation request
    * @return ResponseEntity with the created user
    */
+  @Operation(summary = "Create a new user",
+      description = "Registers a new user with the provided details")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "201", description = "User successfully created",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = UserResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid input or username/email already in use",
+          content = @Content)
+  })
   @PostMapping
-  public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequest request) {
+  public ResponseEntity<UserResponse> createUser(
+      @Parameter(description = "User details", required = true)
+      @Valid @RequestBody UserCreateRequest request) {
     log.info("Creating new user: {}", request.getUsername());
 
     // Create a User entity from the request
@@ -148,9 +214,22 @@ public class UserController {
    * @param request User update request
    * @return ResponseEntity with the updated user
    */
+  @Operation(summary = "Update user information",
+      description = "Updates a user's profile information")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "User successfully updated",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = UserResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid input or username/email conflict",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "User not found",
+          content = @Content)
+  })
   @PutMapping("/{id}")
   public ResponseEntity<UserResponse> updateUser(
+      @Parameter(description = "User ID", required = true)
       @PathVariable Long id,
+      @Parameter(description = "Updated user details", required = true)
       @Valid @RequestBody UserUpdateRequest request) {
 
     log.info("Updating user with ID: {}", id);
@@ -178,9 +257,22 @@ public class UserController {
    * @param request Password update request
    * @return ResponseEntity with the updated user
    */
+  @Operation(summary = "Update user password",
+      description = "Updates a user's password after verifying the current password")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Password successfully updated",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = UserResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid input or incorrect current password",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "User not found",
+          content = @Content)
+  })
   @PutMapping("/{id}/password")
   public ResponseEntity<UserResponse> updatePassword(
+      @Parameter(description = "User ID", required = true)
       @PathVariable Long id,
+      @Parameter(description = "Password update details", required = true)
       @Valid @RequestBody PasswordUpdateRequest request) {
 
     log.info("Updating password for user with ID: {}", id);
@@ -200,8 +292,18 @@ public class UserController {
    * @param id User ID
    * @return ResponseEntity with no content
    */
+  @Operation(summary = "Delete a user",
+      description = "Deletes the user with the specified ID and all their content")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "204", description = "User successfully deleted",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "User not found",
+          content = @Content)
+  })
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+  public ResponseEntity<Void> deleteUser(
+      @Parameter(description = "User ID", required = true)
+      @PathVariable Long id) {
     log.info("Deleting user with ID: {}", id);
 
     userService.deleteUser(id);
@@ -215,8 +317,19 @@ public class UserController {
    * @param id User ID
    * @return ResponseEntity with the count
    */
+  @Operation(summary = "Count published posts by user",
+      description = "Counts the number of published posts by a specific user")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Count retrieved successfully",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = Long.class))),
+      @ApiResponse(responseCode = "404", description = "User not found",
+          content = @Content)
+  })
   @GetMapping("/{id}/post-count")
-  public ResponseEntity<Long> countPublishedPostsByUser(@PathVariable Long id) {
+  public ResponseEntity<Long> countPublishedPostsByUser(
+      @Parameter(description = "User ID", required = true)
+      @PathVariable Long id) {
     log.info("Counting published posts by user with ID: {}", id);
 
     long count = userService.countPublishedPostsByUser(id);
@@ -229,6 +342,13 @@ public class UserController {
    *
    * @return ResponseEntity with a list of authors
    */
+  @Operation(summary = "Get all authors",
+      description = "Retrieves users who have published at least one post")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved authors",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = UserResponse.class)))
+  })
   @GetMapping("/authors")
   public ResponseEntity<List<UserResponse>> getAuthors() {
     log.info("Fetching all authors");

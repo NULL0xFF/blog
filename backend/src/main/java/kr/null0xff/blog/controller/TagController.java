@@ -1,5 +1,11 @@
 package kr.null0xff.blog.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tags")
 @RequiredArgsConstructor
 @Slf4j
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Tag Management", description = "APIs for managing blog tags")
 public class TagController {
 
   private final TagService tagService;
@@ -36,6 +43,13 @@ public class TagController {
    *
    * @return ResponseEntity with a list of all tags
    */
+  @Operation(summary = "Get all tags",
+      description = "Retrieves a list of all available tags")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved tags",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = TagResponse.class)))
+  })
   @GetMapping
   public ResponseEntity<List<TagResponse>> getAllTags() {
     log.info("Fetching all tags");
@@ -55,6 +69,13 @@ public class TagController {
    *
    * @return ResponseEntity with a list of tags with post counts
    */
+  @Operation(summary = "Get all tags with post counts",
+      description = "Retrieves all tags with the count of posts using each tag")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved tags with post counts",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = TagWithPostCountResponse.class)))
+  })
   @GetMapping("/with-post-count")
   public ResponseEntity<List<TagWithPostCountResponse>> getTagsWithPostCount() {
     log.info("Fetching all tags with post counts");
@@ -75,8 +96,16 @@ public class TagController {
    * @param limit Maximum number of tags to return
    * @return ResponseEntity with a list of popular tags with post counts
    */
+  @Operation(summary = "Get popular tags",
+      description = "Retrieves the most popular tags based on post count")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved popular tags",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = TagWithPostCountResponse.class)))
+  })
   @GetMapping("/popular")
   public ResponseEntity<List<TagWithPostCountResponse>> getPopularTags(
+      @Parameter(description = "Maximum number of tags to return")
       @RequestParam(defaultValue = "10") int limit) {
 
     log.info("Fetching {} popular tags", limit);
@@ -96,6 +125,13 @@ public class TagController {
    *
    * @return ResponseEntity with a list of non-empty tags
    */
+  @Operation(summary = "Get non-empty tags",
+      description = "Retrieves tags that have at least one published post")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved non-empty tags",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = TagResponse.class)))
+  })
   @GetMapping("/non-empty")
   public ResponseEntity<List<TagResponse>> getNonEmptyTags() {
     log.info("Fetching non-empty tags");
@@ -116,8 +152,19 @@ public class TagController {
    * @param id Tag ID
    * @return ResponseEntity with the tag
    */
+  @Operation(summary = "Get tag by ID",
+      description = "Retrieves a specific tag by its ID")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the tag",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = TagResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Tag not found",
+          content = @Content)
+  })
   @GetMapping("/{id}")
-  public ResponseEntity<TagResponse> getTagById(@PathVariable Long id) {
+  public ResponseEntity<TagResponse> getTagById(
+      @Parameter(description = "Tag ID", required = true)
+      @PathVariable Long id) {
     log.info("Fetching tag with ID: {}", id);
 
     Tag tag = tagService.getTagById(id);
@@ -132,8 +179,19 @@ public class TagController {
    * @param slug Tag slug
    * @return ResponseEntity with the tag
    */
+  @Operation(summary = "Get tag by slug",
+      description = "Retrieves a specific tag by its slug")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the tag",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = TagResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Tag not found",
+          content = @Content)
+  })
   @GetMapping("/by-slug/{slug}")
-  public ResponseEntity<TagResponse> getTagBySlug(@PathVariable String slug) {
+  public ResponseEntity<TagResponse> getTagBySlug(
+      @Parameter(description = "Tag slug", required = true)
+      @PathVariable String slug) {
     log.info("Fetching tag with slug: {}", slug);
 
     Tag tag = tagService.getTagBySlug(slug);
@@ -148,8 +206,16 @@ public class TagController {
    * @param partialName Partial tag name for search
    * @return ResponseEntity with a list of matching tags
    */
+  @Operation(summary = "Search tags by partial name",
+      description = "Finds tags that match a partial name (useful for autocomplete)")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved matching tags",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = TagResponse.class)))
+  })
   @GetMapping("/search")
   public ResponseEntity<List<TagResponse>> findTagsByPartialName(
+      @Parameter(description = "Partial tag name for search", required = true)
       @RequestParam String partialName) {
 
     log.info("Finding tags matching partial name: {}", partialName);
@@ -170,8 +236,19 @@ public class TagController {
    * @param request Tag creation request
    * @return ResponseEntity with the created tag
    */
+  @Operation(summary = "Create a new tag",
+      description = "Creates a new tag with the provided details")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "201", description = "Tag successfully created",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = TagResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid input or tag already exists",
+          content = @Content)
+  })
   @PostMapping
-  public ResponseEntity<TagResponse> createTag(@Valid @RequestBody TagRequest request) {
+  public ResponseEntity<TagResponse> createTag(
+      @Parameter(description = "Tag details", required = true)
+      @Valid @RequestBody TagRequest request) {
     log.info("Creating new tag: {}", request.getName());
 
     // Create a Tag entity from the request
@@ -198,9 +275,22 @@ public class TagController {
    * @param request Tag update request
    * @return ResponseEntity with the updated tag
    */
+  @Operation(summary = "Update an existing tag",
+      description = "Updates a tag with the specified ID")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Tag successfully updated",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = TagResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid input or name/slug conflict",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "Tag not found",
+          content = @Content)
+  })
   @PutMapping("/{id}")
   public ResponseEntity<TagResponse> updateTag(
+      @Parameter(description = "Tag ID", required = true)
       @PathVariable Long id,
+      @Parameter(description = "Updated tag details", required = true)
       @Valid @RequestBody TagRequest request) {
 
     log.info("Updating tag with ID: {}", id);
@@ -226,8 +316,18 @@ public class TagController {
    * @param id Tag ID
    * @return ResponseEntity with no content
    */
+  @Operation(summary = "Delete a tag",
+      description = "Deletes the tag with the specified ID")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "204", description = "Tag successfully deleted",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "Tag not found",
+          content = @Content)
+  })
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteTag(@PathVariable Long id) {
+  public ResponseEntity<Void> deleteTag(
+      @Parameter(description = "Tag ID", required = true)
+      @PathVariable Long id) {
     log.info("Deleting tag with ID: {}", id);
 
     tagService.deleteTag(id);
@@ -241,8 +341,17 @@ public class TagController {
    * @param slug Slug to check
    * @return ResponseEntity with boolean result
    */
+  @Operation(summary = "Check if slug is in use",
+      description = "Checks if a tag slug is already in use")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Check completed",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = Boolean.class)))
+  })
   @GetMapping("/check-slug")
-  public ResponseEntity<Boolean> isSlugInUse(@RequestParam String slug) {
+  public ResponseEntity<Boolean> isSlugInUse(
+      @Parameter(description = "Slug to check", required = true)
+      @RequestParam String slug) {
     log.info("Checking if tag slug is in use: {}", slug);
 
     boolean isInUse = tagService.isSlugInUse(slug);
@@ -256,8 +365,17 @@ public class TagController {
    * @param name Tag name
    * @return ResponseEntity with the tag
    */
+  @Operation(summary = "Get or create tag by name",
+      description = "Retrieves an existing tag with the given name or creates a new one if it doesn't exist")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Tag retrieved or created successfully",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = TagResponse.class)))
+  })
   @PostMapping("/get-or-create")
-  public ResponseEntity<TagResponse> getOrCreateTag(@RequestParam String name) {
+  public ResponseEntity<TagResponse> getOrCreateTag(
+      @Parameter(description = "Tag name", required = true)
+      @RequestParam String name) {
     log.info("Getting or creating tag: {}", name);
 
     Tag tag = tagService.getOrCreateTag(name);

@@ -1,5 +1,12 @@
 package kr.null0xff.blog.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Category Management", description = "APIs for managing blog categories")
 public class CategoryController {
 
   private final CategoryService categoryService;
@@ -36,6 +44,12 @@ public class CategoryController {
    *
    * @return ResponseEntity with a list of all categories
    */
+  @Operation(summary = "Get all categories", description = "Retrieves a list of all blog categories")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved categories",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CategoryResponse.class)))
+  })
   @GetMapping
   public ResponseEntity<List<CategoryResponse>> getAllCategories() {
     log.info("Fetching all categories");
@@ -55,6 +69,13 @@ public class CategoryController {
    *
    * @return ResponseEntity with a list of categories with post counts
    */
+  @Operation(summary = "Get all categories with post counts",
+      description = "Retrieves all categories with the count of posts in each category")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved categories with post counts",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CategoryWithPostCountResponse.class)))
+  })
   @GetMapping("/with-post-count")
   public ResponseEntity<List<CategoryWithPostCountResponse>> getCategoriesWithPostCount() {
     log.info("Fetching all categories with post counts");
@@ -75,6 +96,13 @@ public class CategoryController {
    *
    * @return ResponseEntity with a list of non-empty categories
    */
+  @Operation(summary = "Get non-empty categories",
+      description = "Retrieves categories that have at least one published post")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved non-empty categories",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CategoryResponse.class)))
+  })
   @GetMapping("/non-empty")
   public ResponseEntity<List<CategoryResponse>> getNonEmptyCategories() {
     log.info("Fetching non-empty categories");
@@ -95,8 +123,19 @@ public class CategoryController {
    * @param id Category ID
    * @return ResponseEntity with the category
    */
+  @Operation(summary = "Get category by ID",
+      description = "Retrieves a specific category by its ID")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the category",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CategoryResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Category not found",
+          content = @Content)
+  })
   @GetMapping("/{id}")
-  public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable Long id) {
+  public ResponseEntity<CategoryResponse> getCategoryById(
+      @Parameter(description = "Category ID", required = true)
+      @PathVariable Long id) {
     log.info("Fetching category with ID: {}", id);
 
     Category category = categoryService.getCategoryById(id);
@@ -111,8 +150,19 @@ public class CategoryController {
    * @param slug Category slug
    * @return ResponseEntity with the category
    */
+  @Operation(summary = "Get category by slug",
+      description = "Retrieves a specific category by its slug")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved the category",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CategoryResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Category not found",
+          content = @Content)
+  })
   @GetMapping("/by-slug/{slug}")
-  public ResponseEntity<CategoryResponse> getCategoryBySlug(@PathVariable String slug) {
+  public ResponseEntity<CategoryResponse> getCategoryBySlug(
+      @Parameter(description = "Category slug", required = true)
+      @PathVariable String slug) {
     log.info("Fetching category with slug: {}", slug);
 
     Category category = categoryService.getCategoryBySlug(slug);
@@ -127,8 +177,18 @@ public class CategoryController {
    * @param request Category creation request
    * @return ResponseEntity with the created category
    */
+  @Operation(summary = "Create a new category",
+      description = "Creates a new category with the provided details")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "201", description = "Category successfully created",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CategoryResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid input",
+          content = @Content)
+  })
   @PostMapping
   public ResponseEntity<CategoryResponse> createCategory(
+      @Parameter(description = "Category details", required = true)
       @Valid @RequestBody CategoryRequest request) {
     log.info("Creating new category: {}", request.getName());
 
@@ -157,9 +217,22 @@ public class CategoryController {
    * @param request Category update request
    * @return ResponseEntity with the updated category
    */
+  @Operation(summary = "Update an existing category",
+      description = "Updates a category with the specified ID")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Category successfully updated",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = CategoryResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid input",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "Category not found",
+          content = @Content)
+  })
   @PutMapping("/{id}")
   public ResponseEntity<CategoryResponse> updateCategory(
+      @Parameter(description = "Category ID", required = true)
       @PathVariable Long id,
+      @Parameter(description = "Updated category details", required = true)
       @Valid @RequestBody CategoryRequest request) {
 
     log.info("Updating category with ID: {}", id);
@@ -186,8 +259,18 @@ public class CategoryController {
    * @param id Category ID
    * @return ResponseEntity with no content
    */
+  @Operation(summary = "Delete a category",
+      description = "Deletes the category with the specified ID")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "204", description = "Category successfully deleted",
+          content = @Content),
+      @ApiResponse(responseCode = "404", description = "Category not found",
+          content = @Content)
+  })
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+  public ResponseEntity<Void> deleteCategory(
+      @Parameter(description = "Category ID", required = true)
+      @PathVariable Long id) {
     log.info("Deleting category with ID: {}", id);
 
     categoryService.deleteCategory(id);
@@ -201,8 +284,17 @@ public class CategoryController {
    * @param slug Slug to check
    * @return ResponseEntity with boolean result
    */
+  @Operation(summary = "Check if slug is in use",
+      description = "Checks if a category slug is already in use")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Check completed",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = Boolean.class)))
+  })
   @GetMapping("/check-slug")
-  public ResponseEntity<Boolean> isSlugInUse(@RequestParam String slug) {
+  public ResponseEntity<Boolean> isSlugInUse(
+      @Parameter(description = "Slug to check", required = true)
+      @RequestParam String slug) {
     log.info("Checking if category slug is in use: {}", slug);
 
     boolean isInUse = categoryService.isSlugInUse(slug);
@@ -216,8 +308,19 @@ public class CategoryController {
    * @param id Category ID
    * @return ResponseEntity with the count
    */
+  @Operation(summary = "Count posts in category",
+      description = "Counts the number of published posts in a specific category")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Count retrieved successfully",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = Long.class))),
+      @ApiResponse(responseCode = "404", description = "Category not found",
+          content = @Content)
+  })
   @GetMapping("/{id}/post-count")
-  public ResponseEntity<Long> countPostsInCategory(@PathVariable Long id) {
+  public ResponseEntity<Long> countPostsInCategory(
+      @Parameter(description = "Category ID", required = true)
+      @PathVariable Long id) {
     log.info("Counting posts in category with ID: {}", id);
 
     long count = categoryService.countPostsInCategory(id);
