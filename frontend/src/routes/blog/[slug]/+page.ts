@@ -1,14 +1,14 @@
-import type { PageLoad } from './$types';
-import { getPostBySlug, getAllPosts } from '$lib/services/blogService';
-import { error } from '@sveltejs/kit';
-import type { PostPageData } from '$lib/types/blog';
+import type {PageLoad} from './$types';
+import {getPostBySlug} from '$lib/services/blogService';
+import {error} from '@sveltejs/kit';
+import type {PostPageData} from '$lib/types/blog';
 
-export const load: PageLoad<PostPageData> = async ({ params, parent }) => {
+export const load: PageLoad<PostPageData> = async ({params, parent}) => {
   try {
     // Get featured posts from parent layout data
-    const { featuredPosts } = await parent();
+    const {featuredPosts} = await parent();
 
-    // Get the specific post - this will throw an error if the API fails
+    // Get the specific post by slug
     const post = await getPostBySlug(params.slug);
 
     return {
